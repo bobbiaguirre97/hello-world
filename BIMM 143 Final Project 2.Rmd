@@ -1,0 +1,119 @@
+---
+title: "Project 2- ACTN3 gene in animals"
+output: 
+  pdf_document: html_notebook
+  html_document: 
+    df_print: paged
+---
+
+Scientific Question:Is there more of a similarity in the ACTN3 gene in fast running animals when compared to the ACTN3 gene of a slower animal? How does the ACTN3 gene in these animals compare with the R and X allele of the ACTN3 gene in humans?
+
+The ACTN3 gene encodes a member of the alpha-actin binding protein gene family, known as alpha-actinin-3. Alpha-actinin-3 is a protein that is only expressed in a subset of type 2 (fast) muscle fibers and it is a structural component of the sarcomeric Z line. The genotype of ACTN3 is associated with speed and power phenotypes.(Pickering 2017).
+
+There is a common polymorphism of the ACTN3 gene known as R577X. This polymorphism occurs when a C to T base substitution causes an arginine base (R) to change to a premature stop codon (X). Humans that are homozygous for the X allele are deficient in the alpha-actinin-3 protein. Deficiency of this protein is associated with a lower fast-twitch fiber percentage.(Pickering 2017).
+
+Scientific Hypothesis:If a fast running animal can run above 50mph, then their ACTN3 gene will be more similar to other fast running animals than the ACTN3 gene of a slower animal. If the ACTN3 gene of the fast running animals is more similar to the R allele of the human ACTN3 gene, then the ACTN3 gene of the slower animal will be more similar to the X allele of the human ACTN3 gene.
+
+I am performing pairwise sequence alignment and multiple sequence alignment and use a heat map to visualize the simialrity of the pairwize and sequence alignment. The pairwise sequence alignment will allow me to compare two DNA sequences with each other and identify similarities that may contribute to similar functional relationships. Multiple sequence alignments will provide similar information. The different animal sequences will be aligned in a way that will reflect evolutionary, functional, or structural relationships which will allow me to answer my question and show whether there is a similarity among the faster animals and a difference when compared to the slower animals. Using these two methods, I will then be able to compare my sequences of the animals to the R and X allele in humans to answer the second part of my scientific question.
+
+I am choosing to use a heat plot as my plotting method. The heat plot will allow me to identify changes in gene expression and in this case, I will be able to identify the similarities within the ACTN3 gene of the different animals.
+
+Below, this bit of code is responsible for loading in all of the necessary packages. Here is where I will define the packages and what they are loaded in for.
+
+1) BioConductor:The BioConductor package allows for the alignment, quantification, and analysis of RNA sequencing data and DNA sequencing data. BioConductor was loaded in order to perform the pairwise sequence alignment and multiple sequence alignment.
+2) Biostrings: Biostrings is a package that contains classes and functions for representing biological strings such as DNA, RNA, and amino acids. This package was loaded in order to read the FASTA files of the different animals.
+3) seqinr: seqinr: seqinr is a package in R that contains utilities to retrieve and analyze biological sequences.
+4) msa: The msa package provide a unified R/Bioconductor interface to the multiple sequence alignment algorithms CLustalW, ClustalOmega, and Muscle.This package was loaded in order to complete the multiple sequence alignment of the 5 FASTA sequences.
+
+Before running the code below, in the console I needed to install the packages using the commands:
+```{r}
+#Install necessary packages
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.14")
+
+#BiocManager::install(version= "3.14") 
+library(BiocManager)
+library(Biostrings)
+library(seqinr)
+library(msa)
+```
+
+Below, this code is responsible for loading in the fasta files for ACTN3 that is associated with all of the animals. 
+```{r}
+# Global variables are defined here that set up the rest of the script
+# ACTN3_FastaFiles6_unaligned is an AAStringSet variable or an S4 variable that is a global variable
+ACTN3_FastaFiles6_unaligned <- readAAStringSet("FastaFiles6")
+
+#ACTN3_FastaFiles6_read is a list variable that is a global variable
+ACTN3_FastaFiles6_read <- read.fasta(file = "FastaFiles6")
+
+# ACTN3_FastaFiles6_read is a list variable and so the length function can be used to determine the number of sequences
+# in the list
+length(ACTN3_FastaFiles6_read)
+
+# Create a vector of data type integer that you can use to loop through each sequence to create the matrix for the heatplot.
+x <- 1:length(ACTN3_FastaFiles6_read)
+```
+
+The above fasta files were searched at NCBI Orthologs.
+
+```{r}
+#install.packages("msa")
+library(msa)
+#read in the FASTA file that contains the ACTN3 gene sequences of all the animals
+mySequences <- readDNAStringSet("FastaFiles6")
+#Print mySequences
+mySequences
+#perform a multiple sequence alignment of the DNAStringSet
+#mySequences and myFirstAlignment are both global variables because they have been created outside of a function and can now be used both inside and outside of functions
+myFirstAlignment <- msa(mySequences)
+#Print myFirstAlignment
+myFirstAlignment
+```
+
+```{r}
+Matrix2Heatmap <- function(S4sequences, seq_length) {
+# Prime the matrix
+  forheatmap <- matrix(nrow=length(x), ncol=length(x))
+  # The function creates a nested for loop
+  for (i in seq_length) {
+    for (j in seq_length){
+      # define the variables for each sequence from the sequence alignment
+      string1 <- S4sequences[i]
+      string2 <- S4sequences[j]
+    
+      # Turn the string1 variable into a character string
+      dsl = AAStringSetList(string1)
+      as.character(unlist(dsl))
+      cl = as(dsl, "CharacterList")
+      as.list(cl)
+      
+      # Turn the string2 variable into a character string
+      dsl2 = AAStringSetList(string2)
+      as.character(unlist(dsl2))
+      cl2 = as(dsl2, "CharacterList")
+      as.list(cl2)
+    
+      # Perform a pairwise sequence alignment for the two strings
+      pa <- pairwiseAlignment(pattern = c(cl2), subject = cl)
+    
+      # Assign the score from the pairwise sequence alignment to the matrix
+      forheatmap[i,j] <- score(pa)
+    }
+  }
+  return(forheatmap)
+}
+
+# Print the values in the heatmap
+seq_matrix_align <- Matrix2Heatmap(ACTN3_FastaFiles6_unaligned, x)
+
+# Create the heatmap with a color key
+heatmap(seq_matrix_align)
+```
+
+Description of the bioinformatics methods and plotting method is done above.
+
+Analysis of Results:
+My heat plot is a qualitative analysis of my data from my pairwise and multiple sequence alignment that was performed. In the heat plot, 1 corresponds to the R allele(the functional coding allele) of the ACTN3 gene in humans. 2 corresponds to the X allele(non-functional coding allele) of the ACTN3 gene in humans.3 corresponds to the cheetah and 4 corresponds to the puma. 5 corresponds to the horse and 6 corresponds to the hedgehog. Greater similarity is shown by a darker color, so in this case the more red the color, the more similarity. Based off of the heat map colors and phylogeny on the side of the heat map, the 2 human alleles are the out group. This means that the R and X allele of the ACTN3 gene is the most different when compared to the fast animals and the hedgehog.The ACTN3 gene of the cheetah and the Puma is also very similar to each other most likely because they are from the same family: Felidae.The sequences of the faster animals are actually sightly more similar to the slow animal(hedgehog) when compared with the two human alleles.Thus, my hypothesis the first part of my hypothesis was correct and the second part of my hypothesis was incorrect.When a fast animal is compared to another fast animal, there is a greater similarity than when the fast animal is compared to the hedgehog. This is true for the 3 fast animals I used. The second part of my hypothesis is wrong, however, because the fast animals do not have any more of a similarity than the slow animal when compared to either the R or X human allele.
+
